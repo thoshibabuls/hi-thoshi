@@ -61,7 +61,7 @@ trail/
 
 ## Deploy to Google Cloud (Cloud Run)
 
-Cloud Run builds the app straight from this GitHub repo and redeploys on every push to `main`. You don't need Docker or `gcloud` on your laptop.
+Cloud Run builds the app straight from this GitHub repo and redeploys on every push to the `deploy` branch. You don't need Docker or `gcloud` on your laptop.
 
 Why Firestore: Cloud Run wipes local files whenever the app restarts or goes idle, so a SQLite file there would lose your tasks.
 
@@ -74,8 +74,8 @@ Search **Firestore** → **Create database** → **Native mode**, database ID `(
 **3. Create the Cloud Run service**
 Search **Cloud Run** → **Deploy container** (or **Create service**) → **Continuously deploy from a repository** → **Set up with Cloud Build**:
 - Enable any APIs it asks for (Cloud Build, Artifact Registry).
-- Repository provider: **GitHub** → sign in → install the Google Cloud Build app on the `hi-thoshi` repo → select it.
-- Branch: `^main$` · Build type: **Dockerfile** · Source location: `/Dockerfile` → **Save**.
+- Repository provider: **GitHub** → sign in → install the Google Cloud Build app on `thoshibabuls/hi-thoshi` → select it.
+- Branch: `^deploy$` · Build type: **Dockerfile** · Source location: `/Dockerfile` → **Save**.
 
 Then on the same page:
 - Service name `hi-thoshi`, region **the same as Firestore** (e.g. `asia-south1`).
@@ -89,7 +89,7 @@ Then on the same page:
 **4. Open it**
 When the build finishes, the URL (`https://hi-thoshi-….run.app`) appears at the top. Open it, enter any username and your password, then add a task and refresh the page. If the task is still there, Firestore is working. You'll also see it under Firestore → **tasks**.
 
-**Updating:** push to `main` on GitHub and Cloud Run rebuilds and redeploys automatically.
+**Updating:** work on `main`, then publish with `git push origin main:deploy`. Cloud Run rebuilds and redeploys automatically.
 
 **If tasks fail to save (errors mentioning 403 or permissions):** go to **IAM**, find the service account Cloud Run uses (shown on the service's **Security** tab, usually `…-compute@developer.gserviceaccount.com`) and grant it the **Cloud Datastore User** role.
 
