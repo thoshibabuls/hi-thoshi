@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hi Thoshi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Gabarito:wght@600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-part="morning">
+    <header class="sky">
+        <div class="wrap">
+            <h1 id="greeting" class="greeting" aria-live="polite">Hi, Thoshi 👋</h1>
+            <p class="today">
+                <span id="today"></span>
+                <button id="rename-btn" class="link" type="button">Change name</button>
+            </p>
+            <form id="name-form" class="name-form" hidden>
+                <label for="name-input">Your name</label>
+                <input id="name-input" maxlength="40" autocomplete="given-name" required>
+                <button type="submit">Save name</button>
+            </form>
+        </div>
+    </header>
+
+    <main class="wrap">
+        <form id="task-form" class="add">
+            <label for="task-input" class="visually-hidden">New task</label>
+            <input id="task-input" maxlength="200" autocomplete="off" required
+                   placeholder="What needs doing today?">
+            <button type="submit">Add task</button>
+        </form>
+
+        <p id="error" class="error" role="alert" hidden></p>
+
+        <ul id="tasks" class="tasks"></ul>
+        <p id="empty" class="empty" hidden>Your list is empty. Add the first thing you want to get done today.</p>
+        <p id="progress" class="progress" aria-live="polite"></p>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
