@@ -1,6 +1,3 @@
 fastapi==0.128.0
 uvicorn[standard]==0.40.0
-
-# tests
-pytest==9.1.1
-httpx==0.28.1
+google-cloud-firestore==2.32.0

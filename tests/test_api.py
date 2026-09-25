@@ -1,7 +1,9 @@
+import base64
+
 import pytest
 from fastapi.testclient import TestClient
 
-from src import db
+from src import db, main
 from src.main import app
 
 
@@ -127,3 +129,42 @@ def test_tasks_survive_restart(client):
     with TestClient(app) as restarted:
         titles = [t["title"] for t in restarted.get("/api/tasks").json()]
     assert titles == ["Keep me"]
+
+
+# --- password (only when APP_PASSWORD is set) -------------------------------
+
+def _basic(password, user="thoshi"):
+    token = base64.b64encode(f"{user}:{password}".encode()).decode()
+    return {"Authorization": f"Basic {token}"}
+
+
+@pytest.fixture
+def locked(client, monkeypatch):
+    monkeypatch.setattr(main, "APP_PASSWORD", "open-sesame")
+    return client
+
+
+def test_no_password_configured_means_open(client):
+    assert client.get("/api/tasks").status_code == 200
+
+
+def test_password_required_when_configured(locked):
+    res = locked.get("/")
+    assert res.status_code == 401
+    assert res.headers["WWW-Authenticate"].startswith("Basic")
+
+
+def test_wrong_password_rejected(locked):
+    assert locked.get("/api/tasks", headers=_basic("nope")).status_code == 401
+
+
+def test_malformed_auth_header_rejected(locked):
+    assert locked.get("/api/tasks", headers={"Authorization": "Basic !!!notbase64"}).status_code == 401
+
+
+def test_right_password_allowed_with_any_username(locked):
+    assert locked.get("/api/tasks", headers=_basic("open-sesame", user="anyone")).status_code == 200
+
+
+def test_health_stays_open_for_monitoring(locked):
+    assert locked.get("/health").status_code == 200

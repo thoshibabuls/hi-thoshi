@@ -1,18 +1,30 @@
+import base64
+import binascii
+import os
+import secrets
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Query, Response, status
+from fastapi import FastAPI, HTTPException, Query, Request, Response, status
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, StringConstraints
 
-from . import db
 from .greeting import greeting_for, part_of_day
+
+# SQLite on your laptop; Firestore on Cloud Run, where local files don't survive restarts.
+if os.getenv("STORAGE") == "firestore":
+    from . import firestore_db as db
+else:
+    from . import db
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 DEFAULT_NAME = "Thoshi"
+
+# When set, every page and API call needs this password (browser login prompt; any username).
+APP_PASSWORD = os.getenv("APP_PASSWORD") or None
 
 
 @asynccontextmanager
@@ -28,6 +40,27 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+def _password_ok(auth_header: str | None) -> bool:
+    if not auth_header or not auth_header.startswith("Basic "):
+        return False
+    try:
+        decoded = base64.b64decode(auth_header[6:], validate=True).decode()
+    except (binascii.Error, UnicodeDecodeError):
+        return False
+    _, _, password = decoded.partition(":")
+    return secrets.compare_digest(password.encode(), APP_PASSWORD.encode())
+
+
+@app.middleware("http")
+async def require_password(request: Request, call_next):
+    if APP_PASSWORD and request.url.path != "/health" and not _password_ok(request.headers.get("authorization")):
+        return Response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            headers={"WWW-Authenticate": 'Basic realm="Hi Thoshi"'},
+        )
+    return await call_next(request)
 
 
 # --- Models ----------------------------------------------------------------
